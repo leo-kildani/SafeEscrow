@@ -261,11 +261,13 @@ export interface Escrow extends BaseContract {
   getEscrowStatus: TypedContractMethod<
     [],
     [
-      [bigint, bigint, bigint, bigint] & {
+      [bigint, bigint, bigint, string, bigint, string] & {
         currentState: bigint;
         contractBalance: bigint;
         buyerDepositAmount: bigint;
+        buyerAddr: string;
         sellerDepositAmount: bigint;
+        sellerAddr: string;
       }
     ],
     "view"
@@ -309,11 +311,13 @@ export interface Escrow extends BaseContract {
   ): TypedContractMethod<
     [],
     [
-      [bigint, bigint, bigint, bigint] & {
+      [bigint, bigint, bigint, string, bigint, string] & {
         currentState: bigint;
         contractBalance: bigint;
         buyerDepositAmount: bigint;
+        buyerAddr: string;
         sellerDepositAmount: bigint;
+        sellerAddr: string;
       }
     ],
     "view"

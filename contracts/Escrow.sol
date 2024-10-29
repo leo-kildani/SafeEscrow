@@ -45,14 +45,14 @@ contract Escrow {
     }
 
     modifier onlyBuyer() {
-        if (msg.sender != buyer) {
+        if (msg.sender == seller || msg.sender != buyer) {
             revert OnlyBuyer();
         }
         _;
     }
 
     modifier onlySeller() {
-        if (msg.sender != seller) {
+        if (msg.sender == buyer || msg.sender != seller) {
             revert OnlySeller();
         }
         _;
@@ -143,6 +143,9 @@ contract Escrow {
         if (!successBuyer) revert TransferFailed();
         emit FundsDistributed(buyer, buyerDeposit, block.timestamp);
 
+        sellerDeposit = 0;
+        buyerDeposit = 0;
+
         emit DeliveryCancelled(msg.sender, block.timestamp);
         emit StateChanged(previousState, state);
     }
@@ -173,6 +176,10 @@ contract Escrow {
         if (!successBuyer) revert TransferFailed();
         emit FundsDistributed(buyer, finalBuyerAmount, block.timestamp);
 
+        // Empty the deposits
+        sellerDeposit = 0;
+        buyerDeposit = 0;
+
         emit ItemDelivered(block.timestamp);
         emit StateChanged(previousState, state);
     }
@@ -189,9 +196,18 @@ contract Escrow {
             PackageState currentState,
             uint contractBalance,
             uint buyerDepositAmount,
-            uint sellerDepositAmount
+            address buyerAddr,
+            uint sellerDepositAmount,
+            address sellerAddr
         )
     {
-        return (state, address(this).balance, buyerDeposit, sellerDeposit);
+        return (
+            state,
+            address(this).balance,
+            buyerDeposit,
+            buyer,
+            sellerDeposit,
+            seller
+        );
     }
 }
