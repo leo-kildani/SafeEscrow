@@ -5,7 +5,6 @@ import {
 } from "@nomicfoundation/hardhat-toolbox/network-helpers";
 import { ethers } from "hardhat";
 import { Escrow } from "../typechain-types";
-import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 
 const PACKAGE_STATE = {
   UNDEFINED: 0,
