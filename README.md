@@ -31,3 +31,4 @@ The goal of this project is to create a safe and streamline way of purchasing on
 ### HardHat for Contract Testing:
 
 1. `npm install --save-dev hardhat`
+2. `npm i --save-dev @nomicfoundation/hardhat-toolbox`
