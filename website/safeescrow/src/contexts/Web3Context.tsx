@@ -12,8 +12,12 @@ import { Escrow__factory } from "@contract-types/factories/Escrow__factory";
 interface Web3ContextType {
   provider: JsonRpcProvider | null;
   seller: string | null;
+  getRandomBuyer: () => Promise<string>;
   deployContract: (itemValue: bigint) => Promise<Escrow>;
-  getContract: (address: string) => Promise<Escrow>;
+  getContract: (
+    deployedAddress: string,
+    signerAddress: string
+  ) => Promise<Escrow>;
 }
 
 const Web3Context = createContext<Web3ContextType | null>(null);
@@ -37,6 +41,23 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     }
   };
 
+  const getRandomBuyer = async () => {
+    if (!provider) {
+      throw new Error("Provider not specified.");
+    }
+    if (!seller) {
+      throw new Error("Seller not specified.");
+    }
+    const accounts = await provider.listAccounts();
+    let buyer;
+    do {
+      buyer = await accounts[
+        Math.floor(Math.random() * accounts.length)
+      ].getAddress();
+    } while (buyer === seller);
+    return buyer;
+  };
+
   const deployContract = async (itemValue: bigint) => {
     if (!provider) {
       throw new Error("Provider not specified.");
@@ -55,15 +76,18 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     return contract;
   };
 
-  const getContract = async (address: string): Promise<Escrow> => {
+  const getContract = async (
+    deployedAddress: string,
+    signerAddress: string
+  ): Promise<Escrow> => {
     if (!provider) {
       throw new Error("Provider not specified.");
     }
     if (!seller) {
       throw new Error("Seller not specified.");
     }
-    const signer = await provider.getSigner(seller);
-    return Escrow__factory.connect(address, signer);
+    const signer = await provider.getSigner(signerAddress);
+    return Escrow__factory.connect(deployedAddress, signer);
   };
 
   useEffect(() => {
@@ -73,6 +97,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
   const value = {
     provider,
     seller,
+    getRandomBuyer,
     deployContract,
     getContract,
   };

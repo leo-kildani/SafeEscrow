@@ -2,7 +2,7 @@
 
 import { Web3Provider } from "@/contexts/Web3Context";
 
-export default function TestLayout({
+export default function TestDeployLayout({
   children,
 }: {
   children: React.ReactNode;
