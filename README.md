@@ -32,3 +32,7 @@ The goal of this project is to create a safe and streamline way of purchasing on
 
 1. `npm install --save-dev hardhat`
 2. `npm i --save-dev @nomicfoundation/hardhat-toolbox`
+
+### React and Next.js for Test Website
+
+`npm install react react-dom next && npm install --save-dev typescript @types/node @types/react @types/react-dom
