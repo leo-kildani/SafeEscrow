@@ -3,23 +3,29 @@
 import { useWeb3 } from "@/contexts/Web3Context";
 import { useState } from "react";
 import { ethers } from "ethers";
-import { Escrow } from "@contract-types/Escrow";
-import { PackageState, EscrowStatus } from "@/constants";
 import { useRouter } from "next/navigation";
+import { useEscrowStatus } from "@/hooks/UseEscrowStatus";
+import { EscrowStatusCard } from "@/components/EscrowStatusCard";
+import { useContractEvents } from "@/hooks/UseContractEvents";
+import { Escrow } from "@contract-types/Escrow";
+import { ContractEvents } from "@/components/ContractEvents";
 
 export default function TestDeployPage() {
   const router = useRouter();
   const { seller, deployContract, getContract } = useWeb3();
+  const { escrowStatus, updateEscrowStatus } = useEscrowStatus();
   const [deployedAddress, setDeployedAddress] = useState<string>("");
   const [itemValue, setItemValue] = useState<string>("0.1");
   const [status, setStatus] = useState<string>("");
-  const [escrowStatus, setEscrowStatus] = useState<EscrowStatus | null>(null);
+  const [contract, setContract] = useState<Escrow | null>(null);
+  const events = useContractEvents(contract);
 
   const handleDeploy = async () => {
     try {
       setStatus("Deploying contract...");
       const valueInWei = ethers.parseEther(itemValue);
       const contract = await deployContract(valueInWei);
+      setContract(contract);
       const address = await contract.getAddress();
       setDeployedAddress(address);
       setStatus("Contract deployed successfully!");
@@ -30,18 +36,6 @@ export default function TestDeployPage() {
       console.error("Deployment error:", error);
       setStatus("Deployment failed! Check console for details.");
     }
-  };
-
-  const updateEscrowStatus = async (contract: Escrow) => {
-    const status = await contract.getEscrowStatus();
-    setEscrowStatus({
-      currentState: Number(status.currentState) as PackageState,
-      contractBalance: status.contractBalance,
-      buyerDepositAmount: status.buyerDepositAmount,
-      buyerAddr: status.buyerAddr,
-      sellerDepositAmount: status.sellerDepositAmount,
-      sellerAddr: status.sellerAddr,
-    } as EscrowStatus);
   };
 
   const handleGetStatus = async () => {
@@ -66,19 +60,7 @@ export default function TestDeployPage() {
   };
 
   const handleConfirmPurchaseClick = (contractAddress: string) => {
-    router.push(`/testConfirmPurchase/${contractAddress}`);
-  };
-
-  const getStateString = (state: PackageState): string => {
-    const states = [
-      "Undefined",
-      "Awaiting",
-      "Processing",
-      "Shipped",
-      "Delivered",
-      "Cancelled",
-    ];
-    return states[state];
+    router.push(`/test/confirmPurchase/${contractAddress}`);
   };
 
   return (
@@ -127,44 +109,7 @@ export default function TestDeployPage() {
         </div>
       )}
 
-      {escrowStatus && (
-        <div className="mb-6 text-black">
-          <h2 className="text-xl mb-2 text-white">Contract Status</h2>
-          <div className="bg-gray-100 p-4 rounded">
-            <p className="mb-2">
-              <span className="font-semibold">State: </span>
-              {getStateString(escrowStatus.currentState)}
-            </p>
-            <p className="mb-2">
-              <span className="font-semibold">Contract Balance: </span>
-              {(Number(escrowStatus.contractBalance) / 1e18).toFixed(4)} ETH
-            </p>
-            <p className="mb-2">
-              <span className="font-semibold">Buyer Deposit: </span>
-              {(Number(escrowStatus.buyerDepositAmount) / 1e18).toFixed(4)} ETH
-            </p>
-            <p className="mb-2">
-              <span className="font-semibold">Seller Deposit: </span>
-              {(Number(escrowStatus.sellerDepositAmount) / 1e18).toFixed(4)} ETH
-            </p>
-            <p className="mb-2">
-              <span className="font-semibold">Buyer Address: </span>
-              <span className="font-mono break-all">
-                {escrowStatus.buyerAddr ===
-                "0x0000000000000000000000000000000000000000"
-                  ? "Not set"
-                  : escrowStatus.buyerAddr}
-              </span>
-            </p>
-            <p className="mb-2 text-black">
-              <span className="font-semibold">Seller Address: </span>
-              <span className="font-mono break-all">
-                {escrowStatus.sellerAddr}
-              </span>
-            </p>
-          </div>
-        </div>
-      )}
+      <EscrowStatusCard escrowStatus={escrowStatus} />
 
       {status && (
         <div className="mt-4 p-4 bg-blue-50 rounded text-black">
@@ -180,6 +125,7 @@ export default function TestDeployPage() {
           Test Confirm Purchase
         </button>
       )}
+      <ContractEvents events={events} />
     </div>
   );
 }

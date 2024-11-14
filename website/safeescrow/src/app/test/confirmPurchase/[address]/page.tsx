@@ -1,19 +1,26 @@
 "use client";
 
-import { EscrowStatus, PackageState } from "@/constants";
 import { useWeb3 } from "@/contexts/Web3Context";
 import { useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import { useEscrowStatus } from "@/hooks/UseEscrowStatus";
+import { EscrowStatusCard } from "@/components/EscrowStatusCard";
+import { useContractEvents } from "@/hooks/UseContractEvents";
 import { Escrow } from "@contract-types/Escrow";
+import { ContractEvents } from "@/components/ContractEvents";
 
 export default function TestConfirmPurchasePage() {
   const params = useParams();
   const contractAddress = params.address as string;
-  const { seller, getRandomBuyer, getContract } = useWeb3();
+  const router = useRouter();
+  const { getRandomBuyer, getContract } = useWeb3();
+  const { escrowStatus, updateEscrowStatus } = useEscrowStatus();
   const [buyer, setBuyer] = useState<string>("");
-  const [escrowStatus, setEscrowStatus] = useState<EscrowStatus | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [isPurchaseConfirmed, setIsPurchaseConfirmed] = useState(false);
+  const [contract, setContract] = useState<Escrow | null>(null);
+  const events = useContractEvents(contract);
 
   const handleRandomBuyer = async () => {
     try {
@@ -34,9 +41,11 @@ export default function TestConfirmPurchasePage() {
       setLoading(true);
       setError("");
       const contract = await getContract(contractAddress, buyer);
+      setContract(contract);
       const itemValue = await contract.itemValue();
       await contract.confirmPurchase({ value: itemValue * 2n });
       await updateEscrowStatus(contract);
+      setIsPurchaseConfirmed(true); // Set confirmation state
     } catch (error) {
       setError("Failed to confirm purchase");
       console.error(error);
@@ -45,16 +54,8 @@ export default function TestConfirmPurchasePage() {
     }
   };
 
-  const updateEscrowStatus = async (contract: Escrow) => {
-    const status = await contract.getEscrowStatus();
-    setEscrowStatus({
-      currentState: Number(status.currentState) as PackageState,
-      contractBalance: status.contractBalance,
-      buyerDepositAmount: status.buyerDepositAmount,
-      buyerAddr: status.buyerAddr,
-      sellerDepositAmount: status.sellerDepositAmount,
-      sellerAddr: status.sellerAddr,
-    } as EscrowStatus);
+  const handleCancelPurhcaseButton = () => {
+    router.push(`/test/cancelPurchase/${contractAddress}/${buyer}`);
   };
 
   return (
@@ -95,10 +96,14 @@ export default function TestConfirmPurchasePage() {
           <div className="bg-gray-50 rounded-md p-4">
             <button
               onClick={handleConfirmPurchase}
-              disabled={!buyer || loading}
+              disabled={!buyer || loading || isPurchaseConfirmed}
               className="w-full bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 disabled:opacity-50 transition-colors"
             >
-              {loading ? "Processing..." : "Confirm Purchase"}
+              {loading
+                ? "Processing..."
+                : isPurchaseConfirmed
+                ? "Purchase Confirmed"
+                : "Confirm Purchase"}
             </button>
           </div>
 
@@ -109,44 +114,22 @@ export default function TestConfirmPurchasePage() {
             </div>
           )}
 
-          {/* Escrow Status */}
-          {escrowStatus && (
-            <div className="bg-gray-50 rounded-md p-4">
-              <h2 className="text-lg font-semibold text-gray-700 mb-4">
-                Escrow Status
-              </h2>
-              <div className="space-y-2 text-sm text-black">
-                <p>
-                  <span className="font-medium">State:</span>{" "}
-                  {PackageState[escrowStatus.currentState]}
-                </p>
-                <p>
-                  <span className="font-medium">Contract Balance:</span>{" "}
-                  {(Number(escrowStatus.contractBalance) / 1e18).toString()} ETH
-                </p>
-                <p>
-                  <span className="font-medium">Buyer Deposit:</span>{" "}
-                  {(Number(escrowStatus.buyerDepositAmount) / 1e18).toString()}{" "}
-                  ETH
-                </p>
-                <p>
-                  <span className="font-medium">Seller Deposit:</span>{" "}
-                  {(Number(escrowStatus.sellerDepositAmount) / 1e18).toString()}{" "}
-                  ETH
-                </p>
-                <p className="font-mono">
-                  <span className="font-medium">Buyer:</span>{" "}
-                  {escrowStatus.buyerAddr}
-                </p>
-                <p className="font-mono">
-                  <span className="font-medium">Seller:</span>{" "}
-                  {escrowStatus.sellerAddr}
-                </p>
-              </div>
-            </div>
-          )}
+          <EscrowStatusCard escrowStatus={escrowStatus} />
+          <ContractEvents events={events} />
         </div>
       </div>
+
+      {/* Cancel Purchase Button - only show when purchase is confirmed */}
+      {buyer && isPurchaseConfirmed && (
+        <div className="flex justify-center mt-6">
+          <button
+            onClick={handleCancelPurhcaseButton}
+            className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md transition-colors"
+          >
+            Test Cancel Purchase
+          </button>
+        </div>
+      )}
     </div>
   );
 }
