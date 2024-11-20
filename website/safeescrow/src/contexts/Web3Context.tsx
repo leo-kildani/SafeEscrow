@@ -16,7 +16,7 @@ interface Web3ContextType {
   deployContract: (itemValue: bigint) => Promise<Escrow>;
   getContract: (
     deployedAddress: string,
-    signerAddress: string
+    signerAddress?: string
   ) => Promise<Escrow>;
 }
 
@@ -26,16 +26,21 @@ export function Web3Provider({ children }: { children: ReactNode }) {
   const [provider, setProvider] = useState<JsonRpcProvider | null>(null);
   const [seller, setSeller] = useState<string | null>(null);
 
+  const initializeSeller = async (provider: JsonRpcProvider) => {
+    const accounts = await provider.listAccounts();
+    return await accounts[0].getAddress();
+  };
+
   const initializeProvider = async () => {
     try {
       const hardhatProvider = new JsonRpcProvider("http://127.0.0.1:8545/");
       setProvider(hardhatProvider);
 
-      const accounts = await hardhatProvider.listAccounts();
-      const sellerAccount = await accounts[
-        Math.floor(Math.random() * accounts.length)
-      ].getAddress();
-      setSeller(sellerAccount);
+      // Only set seller if not already set
+      if (!seller) {
+        const sellerAccount = await initializeSeller(hardhatProvider);
+        setSeller(sellerAccount);
+      }
     } catch (error) {
       console.error("Failed to initialize provider", error);
     }
@@ -65,7 +70,10 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     if (!seller) {
       throw new Error("Seller not specified.");
     }
+
     const signer = await provider.getSigner(seller);
+    console.log("Contract seller address:", seller);
+    console.log("Signer address:", await signer.getAddress());
     // Use the Escrow__factory to create and deploy the contract
     const factory = new Escrow__factory(signer);
     const contract = await factory.deploy(itemValue, {
@@ -78,7 +86,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
 
   const getContract = async (
     deployedAddress: string,
-    signerAddress: string
+    signerAddress?: string
   ): Promise<Escrow> => {
     if (!provider) {
       throw new Error("Provider not specified.");
@@ -86,7 +94,11 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     if (!seller) {
       throw new Error("Seller not specified.");
     }
-    const signer = await provider.getSigner(signerAddress);
+
+    // Use the provided signerAddress or fall back to seller
+    const actualSigner = signerAddress || seller;
+    const signer = await provider.getSigner(actualSigner);
+
     return Escrow__factory.connect(deployedAddress, signer);
   };
 
