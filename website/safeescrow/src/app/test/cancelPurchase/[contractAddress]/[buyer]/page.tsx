@@ -40,6 +40,9 @@ export default function TestCancelPurchase() {
 
   return (
     <div className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8 text-black">
+      <div style={{ position: "absolute", top: 0, right: 0, padding: "10px" }}>
+        <h2>You are buyer.</h2>
+      </div>
       <div className="max-w-3xl mx-auto bg-white rounded-lg shadow p-6">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">
           Cancel Purchase

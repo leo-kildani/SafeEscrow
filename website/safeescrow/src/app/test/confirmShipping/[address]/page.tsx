@@ -11,6 +11,7 @@ import { ContractEvents } from "@/components/ContractEvents";
 
 export default function TestConfirmShippingPage() {
   const params = useParams();
+  const router = useRouter();
   const contractAddress = params.address as string;
   const { seller, getContract } = useWeb3();
   const { escrowStatus, updateEscrowStatus } = useEscrowStatus();
@@ -18,6 +19,7 @@ export default function TestConfirmShippingPage() {
   const [error, setError] = useState("");
   const [isShippingConfirmed, setIsShippingConfirmed] = useState(false);
   const [contract, setContract] = useState<Escrow | null>(null);
+  const [buyer, setBuyer] = useState<string>("");
   const events = useContractEvents(contract);
 
   const handleConfirmShipping = async () => {
@@ -30,20 +32,27 @@ export default function TestConfirmShippingPage() {
         throw new Error("Seller address is not available");
       }
 
-      const contract = await getContract(contractAddress);
-      setContract(contract);
-      await contract.confirmShipping();
-      await updateEscrowStatus(contract);
+      const retrievedContract = await getContract(contractAddress);
+      setContract(retrievedContract);
+      await retrievedContract.confirmShipping();
+      await updateEscrowStatus(retrievedContract);
       setIsShippingConfirmed(true);
+      setBuyer(await retrievedContract.buyer());
     } catch (error) {
       console.error(error);
     } finally {
       setLoading(false);
     }
   };
+  const handleConfirmDelivery = () => {
+    router.push(`/test/confirmDelivery/${contractAddress}/${buyer}`);
+  };
 
   return (
     <div className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+      <div style={{ position: "absolute", top: 0, right: 0, padding: "10px" }}>
+        <h2>You are Seller.</h2>
+      </div>
       <div className="max-w-3xl mx-auto bg-white rounded-lg shadow p-6">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">
           Confirm Shipping
@@ -85,6 +94,15 @@ export default function TestConfirmShippingPage() {
 
           <EscrowStatusCard escrowStatus={escrowStatus} />
           <ContractEvents events={events} />
+
+          <div className="bg-gray-50 rounded-md p-4">
+            <button
+              onClick={handleConfirmDelivery}
+              className="w-full bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors"
+            >
+              Test Confirm Delivery
+            </button>
+          </div>
         </div>
       </div>
     </div>

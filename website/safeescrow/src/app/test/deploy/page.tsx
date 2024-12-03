@@ -29,8 +29,6 @@ export default function TestDeployPage() {
       const address = await contract.getAddress();
       setDeployedAddress(address);
       setStatus("Contract deployed successfully!");
-
-      // Get initial status
       await updateEscrowStatus(contract);
     } catch (error) {
       console.error("Deployment error:", error);
