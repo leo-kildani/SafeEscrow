@@ -35,4 +35,9 @@ The goal of this project is to create a safe and streamline way of purchasing on
 
 ### React and Next.js for Test Website
 
-`npm install react react-dom next && npm install --save-dev typescript @types/node @types/react @types/react-dom
+`npm install react react-dom next && npm install --save-dev typescript @types/node @types/react @types/react-dom`
+
+# How To Run
+1. Run `npm run dev` in the website/safeescrow directory`
+2. Run `npx hardhat node` in the root directory
+3. Go to `localhost:3000/test/deploy` on any browser
