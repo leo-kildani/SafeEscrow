@@ -2,14 +2,9 @@
 
 Ethereum escrow smart contract.
 
-## Authors
+## Author
 
-- Mike Chau
 - Leonardo Kildani
-- Austin Nguyen
-- Charlie Nguyen
-- Nathan Nguyen
-- Alan Vu
 
 ## Overview
 
